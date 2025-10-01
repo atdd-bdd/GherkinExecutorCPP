@@ -1,0 +1,27 @@
+# GherkinExecutor Configuration
+configuration:
+  logIt: true
+  inTest: true
+  traceOn: false
+  addLineToString: true
+  searchTree: false
+  oneDataFile: false
+  spaceCharacters: '~'
+  doNotCompare: "?DNC?"
+  currentDirectory: ""
+  featureSubDirectory: ""
+  treeDirectory: "features/"
+  startingFeatureDirectory: "features/"
+  packageName: "gherkinexecutor"
+  testSubDirectory: "gherkinexecutor/"
+  dataDefinitionFileExtension: "cpp"
+  testFramework: "google"
+  addToPackageName: ""
+  filterExpression: ""
+  tagFilter: "@smoke"
+  linesToAddForDataAndGlue:
+    - "#include <filesystem>"
+  featureFiles:
+    - "simple_test.featurex"
+
+
