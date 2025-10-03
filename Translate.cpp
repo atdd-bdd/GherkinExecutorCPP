@@ -346,7 +346,7 @@ namespace gherkinexecutor {
 
     void Translate::actOnFeature(const std::string& fullName) {
         if (actOnFeatureFirstHalf(fullName)) return;
-
+        dataHeaderPrint("#pragma once");
         testPrintHeader("#pragma once");
         if (Configuration::testFramework == "gtest") {
             testPrint("#include <gtest/gtest.h>");
@@ -366,7 +366,10 @@ namespace gherkinexecutor {
             testPrint("#include <iostream>");
             testPrint("#include <filesystem>");
         }
-        testPrint("using namespace gherkinexecutor::Feature_Simple_Test;");
+        testPrint("#include \"" + dataHeaderFilename + "\"");
+        testPrint("#include \"" + glueClass + ".h\"");
+
+        testPrint("using namespace gherkinexecutor::" + featureName + ";");
         setupnamespace();
 
         checkForTagLine();
@@ -430,7 +433,11 @@ namespace gherkinexecutor {
             featureName + ".cpp";
         std::string testPathnameHeader = Configuration::testSubDirectory + featureDirectory + featureName + "/" +
             featureName + ".h";
+        dataHeaderFilename = 
+            featureName + "_data.h";
+        std::string dataHeaderPathname = Configuration::testSubDirectory + featureDirectory + featureName + "/" + dataHeaderFilename;
         printFlow(" Writing " + testPathname);
+
 
         std::string templateFilename = Configuration::testSubDirectory + featureDirectory + featureName + "/" +
             featureName + "_glue.tmpl";
@@ -446,7 +453,8 @@ namespace gherkinexecutor {
             testFile = std::make_unique<std::ofstream>(testPathname);
             testFileHeader = std::make_unique<std::ofstream>(testPathnameHeader);
             templateConstruct->glueTemplateFile = std::make_unique<std::ofstream>(templateFilename);
-            templateConstruct->glueTemplateFileHeader = std::make_unique<std::ofstream>(templateFilename);
+            templateConstruct->glueTemplateFileHeader = std::make_unique<std::ofstream>(templateFilenameHeader);
+            dataHeaderFile = std::make_unique<std::ofstream>(dataHeaderPathname);
         }
         catch (const std::exception& e) {
             error("IO Exception in setting up the files");
@@ -574,7 +582,7 @@ namespace gherkinexecutor {
         if (Configuration::logIt) {
             std::string filename = directoryName + "/log.txt";
             
-            return "   void log(const std::string& value) {\n" +
+            return "public:  void log(const std::string& value) {\n" +
                 std::string(
                     "try {\n"
                     "  std::ofstream logFile(\"" + filename + "\", std::ios::app); // append mode\n"
@@ -624,6 +632,14 @@ namespace gherkinexecutor {
     void Translate::testPrint(const std::string& line) {
         try {
             *testFile << line << std::endl;
+        }
+        catch (const std::exception& e) {
+            error("IO ERROR ");
+        }
+    }
+    void Translate::dataHeaderPrint(const std::string& line) {
+        try {
+            *dataHeaderFile << line << std::endl;
         }
         catch (const std::exception& e) {
             error("IO ERROR ");
@@ -889,6 +905,22 @@ namespace gherkinexecutor {
         try {
             if (testFile) {
                 testFile->close();
+            }
+        }
+        catch (const std::exception& e) {
+            error("Error in closing ");
+        }
+        try {
+            if (testFileHeader) {
+                testFileHeader->close();
+            }
+        }
+        catch (const std::exception& e) {
+            error("Error in closing ");
+        }
+        try {
+            if (dataHeaderFile) {
+                dataHeaderFile->close();
             }
         }
         catch (const std::exception& e) {

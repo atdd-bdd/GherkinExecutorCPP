@@ -61,6 +61,8 @@ namespace gherkinexecutor {
 
         std::unique_ptr<std::ofstream> testFile;
         std::unique_ptr<std::ofstream> testFileHeader;
+        std::unique_ptr<std::ofstream> dataHeaderFile;
+        std::string dataHeaderFilename;
         bool featureActedOn;
         std::string featureName;
         std::string directoryName;
@@ -109,6 +111,7 @@ namespace gherkinexecutor {
         void error(const std::string& value);
         void warning(const std::string& value);
         void testPrint(const std::string& line);
+        void dataHeaderPrint(const std::string& line);
         void testPrintHeader(const std::string& line);
         std::vector<std::string> parseLine(const std::string& line);
         std::pair<std::string, std::vector<std::string>> lookForFollow();

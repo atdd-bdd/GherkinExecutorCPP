@@ -54,6 +54,8 @@ namespace gherkinexecutor {
 
         // Put each in a new file
         startDataFile(className, false);
+        parent->dataHeaderPrint("#include \"" + className + ".h\"");
+        parent->dataHeaderPrint("#include \"" + internalClassName + ".h\"");
         dataPrintHeader("#pragma once");
         dataPrintLn("#include <algorithm>");
         dataPrintLn("#include <sstream>");

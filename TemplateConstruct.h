@@ -8,7 +8,8 @@ namespace gherkinexecutor {
 
     public:
         std::unique_ptr<std::ofstream> glueTemplateFile;
-        std::unique_ptr<std::ofstream> glueTemplateFileHeader;      
+        std::unique_ptr<std::ofstream> glueTemplateFileHeader; 
+
         int processNamespaces(const std::string& packagePath);
         void endNamespace(const std::string& packagePath);
 
@@ -26,6 +27,7 @@ namespace gherkinexecutor {
 
     private:
         void templatePrint(const std::string& line);
+        void templateHeaderPrint(const std::string& line);
         bool checkForExistingTemplate(const std::string& dataType, const std::string& fullName);
     };
 }

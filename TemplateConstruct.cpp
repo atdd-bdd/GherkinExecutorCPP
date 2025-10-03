@@ -21,6 +21,17 @@ namespace gherkinexecutor {
         }
     }
 
+    void TemplateConstruct::templateHeaderPrint(const std::string& line) {
+        try {
+            if (glueTemplateFileHeader) {
+                *glueTemplateFileHeader << line << std::endl;
+            }
+        }
+        catch (const std::exception& e) {
+            parent->error("IO ERROR");
+        }
+    }
+
     bool TemplateConstruct::checkForExistingTemplate(const std::string& dataType, const std::string& fullName) {
         auto it = parent->glueFunctions.find(fullName);
         if (it != parent->glueFunctions.end()) {
@@ -37,15 +48,17 @@ namespace gherkinexecutor {
         if (checkForExistingTemplate(dataType, fullName)) return;
 
         parent->glueFunctions[fullName] = dataType;
-        templatePrint("    void " + fullName + "(" + dataType + " value ) {");
-        templatePrint("        System.out.println(\"---  \" + \"" + fullName + "\");");
+        templateHeaderPrint("   void " + fullName + "(" + dataType + " values); ");
+
+        templatePrint("    void " + parent->glueClass + "::" + fullName + "(" + dataType + " value ) {");
+        templatePrint("        std::cout << \"--- << " + fullName + "\" << std::endl;");
 
         if (Configuration::logIt) {
-            templatePrint("        log(\"---  \" + \"" + fullName + "\");");
-            templatePrint("        log(value.toString());");
+            templatePrint("        log(\"--- " + fullName + "\");");
+            // templatePrint("        log(value.toString());");
         }
 
-        templatePrint("        System.out.println(value);");
+        templatePrint("        std::cout << value << std::endl;");
 
         if (!Configuration::inTest) {
             templatePrint("        fail(\"Must implement\");");
@@ -60,7 +73,9 @@ namespace gherkinexecutor {
         if (checkForExistingTemplate(dataType, fullName)) return;
 
         parent->glueFunctions[fullName] = dataType;
-        templatePrint("    void " + fullName + "(" + dataType + " values ) {");
+        templateHeaderPrint("   void " + fullName + "(" + dataType + " values); ");
+
+        templatePrint("    void " + parent->glueClass + "::" + fullName + "(" + dataType + " values ) {");
         templatePrint("        System.out.println(\"---  \" + \"" + fullName + "\");");
 
         if (Configuration::logIt) {
@@ -92,7 +107,9 @@ namespace gherkinexecutor {
         if (checkForExistingTemplate(dataType, fullName)) return;
 
         parent->glueFunctions[fullName] = dataType;
-        templatePrint("    void " + fullName + "(){");
+        templateHeaderPrint("   void " + fullName + "(" + dataType + " values); ");
+
+        templatePrint("    void " + parent->glueClass + "::" + fullName + "(){");
         templatePrint("        System.out.println(\"---  \" + \"" + fullName + "\");");
 
         if (Configuration::logIt) {
@@ -112,7 +129,8 @@ namespace gherkinexecutor {
         if (checkForExistingTemplate(dataType, fullName)) return;
 
         parent->glueFunctions[fullName] = dataType;
-        templatePrint("    void " + fullName + "(" + dataType + " values ) {");
+        templateHeaderPrint("   void "  + fullName + "(" + dataType + " values); ");
+        templatePrint("    void " + parent->glueClass + "::" + fullName + "(" + dataType + " values ) {");
         templatePrint("    List<List<" + listElement + ">> is = convertListTo" + dataType + "(values);");
         templatePrint("    System.out.println(is);");
 
@@ -132,6 +150,7 @@ namespace gherkinexecutor {
 
         for (const auto& part : parts) {
             templatePrint("namespace " + part + " {");
+            templateHeaderPrint("namespace " + part + " {");
          }
 
         return static_cast<int>(parts.size());
@@ -141,6 +160,7 @@ namespace gherkinexecutor {
 
         for (size_t i = 0; i < count + 1; ++i) {
             templatePrint("}");
+            templateHeaderPrint("}");
         }
     }
 
@@ -160,21 +180,30 @@ namespace gherkinexecutor {
         else {
             templatePrint("#include <gtest/gtest.h>");
         }
-        templatePrint("#include <vector>");
-        templatePrint("#include <string>");
+        templateHeaderPrint("#include <vector>");
+        templateHeaderPrint("#include <string>");
         if (Configuration::logIt) {
             templatePrint("#include <fstream>");
             templatePrint("#include <iostream>"); 
             templatePrint("#include <filesystem>");
         }
-        templatePrint("using namespace gherkinexecutor::" + parent->packagePath + ";"); 
+        for (const std::string& line : parent->linesToAddForDataAndGlue) {
+            templatePrint(line);
+        }
+        templatePrint("#include \"" + parent->glueClass + ".h\"");
+        templatePrint("#include \"" + parent->dataHeaderFilename + "\"");
+
+        templateHeaderPrint("#include \"" + parent->dataHeaderFilename + "\"");
+        templatePrint("using namespace gherkinexecutor::" + parent->featureName + "; ");
         processNamespaces(parent->packagePath);
 
         templatePrint("");
-        templatePrint("class " + parent->glueClass + " {");
-        templatePrint("    final string DNCString = \"" + Configuration::doNotCompare + "\";");
-        templatePrint(parent->logIt());
-        templatePrint("");
+        templateHeaderPrint("class " + parent->glueClass + " {");
+        templateHeaderPrint("public:");
+        templateHeaderPrint("    std::string DNCString;");
+        templatePrint("std::string DNCString = \"" + Configuration::doNotCompare + "\";");
+        templateHeaderPrint(parent->logIt());
+        templateHeaderPrint("");
     }
 
     void TemplateConstruct::endTemplate() {
@@ -182,7 +211,7 @@ namespace gherkinexecutor {
             templatePrint(line);
         }
 
-        templatePrint("    }"); // End the class
+        templateHeaderPrint("    };"); // End the class
         endNamespace(parent->packagePath);
         try {
             if (parent->testFile) {
@@ -195,6 +224,15 @@ namespace gherkinexecutor {
         catch (const std::exception& e) {
             parent->error("Error in closing ");
         }
+        try {
+             if (glueTemplateFileHeader) {
+                glueTemplateFileHeader->close();
+            }
+        }
+        catch (const std::exception& e) {
+            parent->error("Error in closing ");
+        }
+
     }
 
 } // namespace gherkinexecutor
