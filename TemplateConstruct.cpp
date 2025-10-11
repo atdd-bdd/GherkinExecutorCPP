@@ -46,7 +46,7 @@ namespace gherkinexecutor {
 
     void TemplateConstruct::makeFunctionTemplate(const std::string& dataType, const std::string& fullName) {
         if (checkForExistingTemplate(dataType, fullName)) return;
-
+        std::cout << "Creating function template for " << fullName << " with data type " << dataType << std::endl;   
         parent->glueFunctions[fullName] = dataType;
         templateHeaderPrint("   void " + fullName + "(" + dataType + " values); ");
 
@@ -71,81 +71,96 @@ namespace gherkinexecutor {
     void TemplateConstruct::makeFunctionTemplateIsList(const std::string& dataType, const std::string& fullName,
         const std::string& listElement) {
         if (checkForExistingTemplate(dataType, fullName)) return;
-
+        std::cout << "Creating function template is list for " << fullName << " with data type " << dataType << std::endl;
         parent->glueFunctions[fullName] = dataType;
-        templateHeaderPrint("   void " + fullName + "(" + dataType + " values); ");
+        templateHeaderPrint("   void " + fullName + "(const " + dataType + "& values); ");
+        templatePrint("    void " + parent->glueClass + "::" + fullName + "(const " + dataType + "& values ) {");
+        templatePrint("        std::cout << \"---  \" << \"" + fullName + "\" << std::endl;");
 
-        templatePrint("    void " + parent->glueClass + "::" + fullName + "(" + dataType + " values ) {");
-        templatePrint("        System.out.println(\"---  \" + \"" + fullName + "\");");
-
-        if (Configuration::logIt) {
-            templatePrint("        log(\"---  \" + \"" + fullName + "\");");
-            templatePrint("        log(values.toString());");
+        if (dataType == "std::vector<std::vector<std::string>>") {
+            // Special handling for vector of vector of strings
+            templatePrint("        for (const auto& row : values) {");
+            templatePrint("            for (const auto& element : row) {");
+            templatePrint("                std::cout << element << \" \";");
+            if (Configuration::logIt) {
+                templatePrint("                log(element);");
+            }
+            templatePrint("            }");
+            templatePrint("            std::cout << std::endl;");
+            templatePrint("        }");
+            if (Configuration::logIt) {
+                templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
+            }
         }
-
-        std::string name = listElement + "Internal";
-        templatePrint("        for (" + listElement + " value : values){");
-        templatePrint("             System.out.println(value);");
-        templatePrint("             // Add calls to production code and asserts");
-
-        if (dataType != "List<List<String>>" && listElement != "String" &&
-            parent->dataNamesInternal.find(name) != parent->dataNamesInternal.end()) {
-            templatePrint("              " + name + " i = value.to" + name + "();");
+        else {
+            // Original handling for other types
+            if (Configuration::logIt) {
+                templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
+                templatePrint("        for (const auto& v : values) { log(v.to_string()); }");
+            }
+            std::string name = listElement + "Internal";
+            templatePrint("        for (const " + listElement + "& value : values){");
+            templatePrint("             std::cout << value.to_string() << std::endl;");
+            templatePrint("             // Add calls to production code and asserts");
+            if (listElement != "std::string" &&
+                parent->dataNamesInternal.find(name) != parent->dataNamesInternal.end()) {
+                templatePrint("              " + name + " i = value.to" + name + "();");
+            }
+            templatePrint("              }");
         }
-
-        templatePrint("              }");
 
         if (!Configuration::inTest) {
-            templatePrint("        fail(\"Must implement\");");
+            templatePrint("        FAIL() << \"Must implement\";");
         }
-
         templatePrint("    }");
         templatePrint("");
     }
-
     void TemplateConstruct::makeFunctionTemplateNothing(const std::string& dataType, const std::string& fullName) {
         if (checkForExistingTemplate(dataType, fullName)) return;
-
         parent->glueFunctions[fullName] = dataType;
-        templateHeaderPrint("   void " + fullName + "(" + dataType + " values); ");
-
+        templateHeaderPrint("   void " + fullName + "(); ");
         templatePrint("    void " + parent->glueClass + "::" + fullName + "(){");
-        templatePrint("        System.out.println(\"---  \" + \"" + fullName + "\");");
-
+        templatePrint("        std::cout << \"---  \" << \"" + fullName + "\" << std::endl;");
         if (Configuration::logIt) {
-            templatePrint("        log(\"---  \" + \"" + fullName + "\");");
+            templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
         }
-
         if (!Configuration::inTest) {
-            templatePrint("        fail(\"Must implement\");");
+            templatePrint("        FAIL() << \"Must implement\";");
         }
-
         templatePrint("    }");
         templatePrint("");
     }
-
     void TemplateConstruct::makeFunctionTemplateObject(const std::string& dataType, const std::string& fullName,
         const std::string& listElement) {
         if (checkForExistingTemplate(dataType, fullName)) return;
-
+        std::cout << "Creating function template object for " << fullName << " with data type " << dataType << std::endl;   
+        if (dataType != "std::vector<std::vector<std::string>>") {
+            std::cerr << "Not creating function for " << fullName << " with data type " << dataType << std::endl;
+            return;
+        }
         parent->glueFunctions[fullName] = dataType;
-        templateHeaderPrint("   void "  + fullName + "(" + dataType + " values); ");
-        templatePrint("    void " + parent->glueClass + "::" + fullName + "(" + dataType + " values ) {");
-        templatePrint("    List<List<" + listElement + ">> is = convertListTo" + dataType + "(values);");
-        templatePrint("    System.out.println(is);");
-
+        templateHeaderPrint("   void " + fullName + "(const " + dataType + "& values); ");
+        templatePrint("    void " + parent->glueClass + "::" + fullName + "(const " + dataType + "& values ) {");
         if (Configuration::logIt) {
-            templatePrint("        log(\"---  \" + \"" + fullName + "\");");
+            templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
+            //templatePrint("    std::vector<std::vector<" + listElement + ">> is = convertListTo" + dataType + "(values);");
+        templatePrint("    for (const auto& row : is) {");
+        templatePrint("        for (const auto& element : row) {");
+        templatePrint("            std::cout << element << \" \";");
+        if (Configuration::logIt) {
+            templatePrint("            log(element);");
         }
-
+        templatePrint("        }");
+        templatePrint("        std::cout << std::endl;");
+        templatePrint("    }");
+        }
         if (!Configuration::inTest) {
-            templatePrint("        fail(\"Must implement\");");
+            templatePrint("        FAIL() << \"Must implement\";");
         }
-
         templatePrint("    }");
         templatePrint("");
     }
-    int TemplateConstruct::processNamespaces(const std::string& packagePath) {
+        int TemplateConstruct::processNamespaces(const std::string& packagePath) {
          std::vector<std::string> parts = parent->extractNamespaceParts(packagePath);
 
         for (const auto& part : parts) {

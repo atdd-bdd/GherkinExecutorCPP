@@ -42,10 +42,10 @@
     <ClCompile Include="DefineConstruct.h">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="StepConstruct.cpp">
+    <ClCompile Include="Configuration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Configuration.cpp">
+    <ClCompile Include="StepConstruct.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

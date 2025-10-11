@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 namespace gherkinexecutor {
-    // Static member definitions (you'll need these in your actual implementation)
+    // Static member definitions
     bool Configuration::logIt = false;
     bool Configuration::inTest = false;
     bool Configuration::traceOn = false;
@@ -116,12 +116,88 @@ namespace gherkinexecutor {
 
             std::stringstream ss(trimmed);
             std::string item;
+            bool inQuotes = false;
+            char quoteChar = '\0';
+            std::string buffer;
 
-            while (std::getline(ss, item, ',')) {
-                std::string cleanItem = trim(item);
-                if (!cleanItem.empty()) {
-                    result.push_back(unescapeYamlString(cleanItem));
+            while (ss.good()) {
+                char c = ss.get();
+                if (ss.eof()) break;
+
+                if (inQuotes) {
+                    if (c == quoteChar) {
+                        inQuotes = false;
+                    }
+                    else if (c == '\\') {
+                        // Handle escape sequences
+                        char next = ss.peek();
+                        if (next == quoteChar || next == '\\') {
+                            ss.get(); // consume escaped char
+                            buffer += next;
+                        }
+                        else {
+                            buffer += c;
+                        }
+                    }
+                    else {
+                        buffer += c;
+                    }
                 }
+                else {
+                    if (c == '\'' || c == '"') {
+                        inQuotes = true;
+                        quoteChar = c;
+                    }
+                    else if (c == ',') {
+                        std::string cleanItem = trim(buffer);
+                        if (!cleanItem.empty()) {
+                            result.push_back(cleanItem);
+                        }
+                        buffer.clear();
+                    }
+                    else {
+                        buffer += c;
+                    }
+                }
+            }
+
+            // Add last item
+            std::string cleanItem = trim(buffer);
+            if (!cleanItem.empty()) {
+                result.push_back(cleanItem);
+            }
+
+            return result;
+        }
+
+        // Parse multi-line YAML array (lines starting with -)
+        std::vector<std::string> parseMultiLineYamlArray(std::ifstream& file) {
+            std::vector<std::string> result;
+            std::streampos lastPos = file.tellg();
+            std::string line;
+
+            while (std::getline(file, line)) {
+                std::string trimmedLine = trim(line);
+
+                // Check if this line is an array item (starts with -)
+                if (trimmedLine.empty() || trimmedLine[0] != '-') {
+                    // Not an array item, rewind to before this line
+                    file.seekg(lastPos);
+                    break;
+                }
+
+                // Remove the leading '-' and any whitespace after it
+                std::string item = trimmedLine.substr(1);
+                item = trim(item);
+
+                // Unescape the string value
+                item = unescapeYamlString(item);
+
+                if (!item.empty()) {
+                    result.push_back(item);
+                }
+
+                lastPos = file.tellg();
             }
 
             return result;
@@ -142,6 +218,19 @@ namespace gherkinexecutor {
             }
             oss << "]";
             return oss.str();
+        }
+
+        // Format array in multi-line YAML format
+        void writeMultiLineYamlArray(std::ofstream& file, const std::vector<std::string>& vec) {
+            if (vec.empty()) {
+                file << " []\n";
+                return;
+            }
+
+            file << "\n";
+            for (const auto& item : vec) {
+                file << "    - " << escapeYamlString(item) << "\n";
+            }
         }
 
         bool parseBool(const std::string& value) {
@@ -206,9 +295,11 @@ namespace gherkinexecutor {
             file << "testFramework: " << escapeYamlString(testFramework) << "\n";
             file << "addToPackageName: " << escapeYamlString(addToPackageName) << "\n\n";
 
-            // Arrays
+            // Arrays in multi-line format
             file << "# Additional imports/lines to add\n";
-            file << "linesToAddForDataAndGlue: " << formatYamlArray(linesToAddForDataAndGlue) << "\n\n";
+            file << "linesToAddForDataAndGlue:";
+            writeMultiLineYamlArray(file, linesToAddForDataAndGlue);
+            file << "\n";
 
             // Filtering and file selection
             file << "# Filtering and file selection\n";
@@ -217,7 +308,8 @@ namespace gherkinexecutor {
             file << "oneDataFile: " << formatBool(oneDataFile) << "\n\n";
 
             file << "# Feature files to process\n";
-            file << "featureFiles: " << formatYamlArray(featureFiles) << "\n";
+            file << "featureFiles:";
+            writeMultiLineYamlArray(file, featureFiles);
 
             file.close();
 
@@ -305,13 +397,29 @@ namespace gherkinexecutor {
                     addToPackageName = unescapeYamlString(value);
                 }
                 else if (key == "linesToAddForDataAndGlue") {
-                    linesToAddForDataAndGlue = parseYamlArray(value);
+                    // Check if it's an inline array or multi-line array
+                    if (value.empty() || value == "[]") {
+                        // Multi-line array format - read next lines starting with -
+                        linesToAddForDataAndGlue = parseMultiLineYamlArray(file);
+                    }
+                    else {
+                        // Inline array format
+                        linesToAddForDataAndGlue = parseYamlArray(value);
+                    }
                 }
                 else if (key == "filterExpression") {
                     filterExpression = unescapeYamlString(value);
                 }
                 else if (key == "featureFiles") {
-                    featureFiles = parseYamlArray(value);
+                    // Check if it's an inline array or multi-line array
+                    if (value.empty() || value == "[]") {
+                        // Multi-line array format
+                        featureFiles = parseMultiLineYamlArray(file);
+                    }
+                    else {
+                        // Inline array format
+                        featureFiles = parseYamlArray(value);
+                    }
                 }
                 else if (key == "tagFilter") {
                     tagFilter = unescapeYamlString(value);

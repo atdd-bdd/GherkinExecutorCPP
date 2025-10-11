@@ -38,7 +38,7 @@ namespace gherkinexecutor {
         tagLineNumber(0), errorOccurred(false) {
 
         filterExpression = Configuration::filterExpression;
-        linesToAddForDataAndGlue = Configuration::linesToAddForDataAndGlue;
+        //linesToAddForDataAndGlue = Configuration::linesToAddForDataAndGlue;
 
         dataConstruct = std::make_unique<DataConstruct>(this);
         templateConstruct = std::make_unique<TemplateConstruct>(this);
@@ -576,8 +576,8 @@ namespace gherkinexecutor {
         if (Configuration::logIt) {
             testPrint("        log(\"" + fullNameToUse + "\");");
         }
-    }
 
+    }
     std::string Translate::logIt() {
         if (Configuration::logIt) {
             std::string filename = directoryName + "/log.txt";

@@ -3,6 +3,13 @@ The expected results are in the folder in SimpleTest.    These work in CPP.
 
 Steps:
 
+*** Check out configuration reading from yaml.   Not sure it's working for the arrays. 
+
+** translate ID.java into ID.cpp and make sure ID. h matches 
+
+Change name of tmpl file to cpp.tmpl 
+
+
 Create a feature_all_data.h  file that includes all the data type headers. 
 
 Finish creating the glue file header. (.h.tmpl)  
@@ -16,14 +23,19 @@ Will not need header file for the test file, since gtest calls it.
     Need namespace surrounding everything.   and "end namespace"
     test_header()     data_header() or something like that 
     The header will have a .h.tmpl on it. and the other with .cpp.tmpl 
-2. All files must have #include pch.h 
+    *** Mostly done 
+2. All files must have #include pch.h -  NO **** 
 3. Change every creation method to match what is in the expected result file.
 4. Update the data types.
     int, char, float, bool, double, void, wchar_,  
     short, long, long long, unsigned for all of these 
+    *** Check this 
 
 4. Then start on example.featurex and then the remainder.  
+    **** Started,  need some work - ID basically.   
+        Take out include "data.h" for the data construct 
 
 
 Add the other test frameworks (gtest, MSTest, etc.  whatever they have)
-
+    MSTest will need to have some major changes (where to do namespaces and end up the 
+        classes)

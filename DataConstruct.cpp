@@ -63,14 +63,14 @@ namespace gherkinexecutor {
         dataPrintHeader("#include <string>");
         dataPrintHeader("#include <vector>");
 
-        dataPrintHeader("#include \""+ internalClassName +".h\""); 
-        dataPrintLn("#include \"" + className + ".h\"");
-        processNamespaces(parent->packagePath);
         for (const std::string& line : parent->linesToAddForDataAndGlue) {
             dataPrintLn(line);
-            dataPrintHeader(line); 
+            dataPrintHeader(line);
         }
-
+        dataPrintHeader("#include \""+ internalClassName +".h\""); 
+        //dataPrintLn("#include \"" + parent->dataHeaderFilename + "\"");
+        dataPrintLn("#include \"" + className + ".h\"");
+        processNamespaces(parent->packagePath);
         addSuppressionOfWarnings();
         dataPrintHeader("class " + internalClassName + ";");
         dataPrintHeader("class " + className + " {");
@@ -189,9 +189,10 @@ namespace gherkinexecutor {
 
     void DataConstruct::createConstructor(const std::vector<DataValues>& variables, const std::string& className) {
         //dataPrintLn("    " + className + "::" + className + "() {}");
-        dataPrintLn("    " + className + "::" + className + "(");
-        dataPrintHeader("    " + className + "() {}");
+        dataPrintHeader("    " + className + "();");
+        dataPrintLn("    " + className + "::" + className + "(){}");
         dataPrintHeader("    " + className + "(");
+        dataPrintLn("    " + className + "::" + className + "(");
         std::string comma = "";
         for (const DataValues& variable : variables) {
             dataPrintLn("        " + comma + "const std::string& " + parent->makeName(variable.name));
@@ -217,12 +218,17 @@ namespace gherkinexecutor {
             comma = ",";
         }
 
-        dataPrintLn("        ) {");
+        dataPrintLn("        ) : ");
         dataPrintHeader("        ) ;");
-        for (const DataValues& variable : variables) {
-            dataPrintLn("        this->" + parent->makeName(variable.name) + " = " + parent->makeName(variable.name) + ";");
+        for (size_t i = 0; i < variables.size(); ++i) {
+            const DataValues& variable = variables[i];
+            std::string line = "        " + parent->makeName(variable.name) + "(" + parent->makeName(variable.name) + ")";
+            if (i < variables.size() - 1) {
+                line += ",";
+            }
+            dataPrintLn(line);
         }
-        dataPrintLn("    }");
+        dataPrintLn("   { }");
     }
 
     void DataConstruct::createEqualsMethod(const std::vector<DataValues>& variables, const std::string& className) {
@@ -484,22 +490,23 @@ namespace gherkinexecutor {
         dataPrintHeader("#pragma once");
         dataPrintHeader("#include <string>");
         dataPrintHeader("#include <vector>");
-        dataPrintLn("#include \"" + otherClassName + ".h\"");
 
-        processNamespaces(parent->packagePath);
-        dataPrintHeader("class " + otherClassName + ";");
-        
         for (const std::string& line : parent->linesToAddForDataAndGlue) {
             dataPrintLn(line);
             dataPrintHeader(line);
         }
+         dataPrintLn("#include \"" + otherClassName + ".h\"");
+        dataPrintLn("#include \"" + className + ".h\"");
+        //dataPrintLn("#include \"" + parent->dataHeaderFilename + "\"");
+        processNamespaces(parent->packagePath);
+        dataPrintHeader("class " + otherClassName + ";");
+        
 
         addSuppressionOfWarnings();
 
         dataPrintHeader("class " + className + " {");
         dataPrintHeader("public:");
         for (const DataValues& variable : variables) {
-            dataPrintLn("    " + variable.dataType + " " + parent->makeName(variable.name) + ";");
             dataPrintHeader("    " + variable.dataType + " " + parent->makeName(variable.name) + ";");  
         }
         dataPrintLn("    ");
@@ -552,8 +559,7 @@ namespace gherkinexecutor {
         else {
             value = parent->quoteIt(variable.defaultVal);
         }
-        std::cout << "Making string from datatype " << variable.dataType
-            << " " << " value " << value; 
+      
         if (variable.dataType == "std::string") {
             return value;
         }
@@ -564,7 +570,7 @@ namespace gherkinexecutor {
             return "std::to_string(" + value + ")";
         }
         else {
-            return ".std::to_string(" + value + ")";
+            return value + ".to_string()";      
         }
     }
 
