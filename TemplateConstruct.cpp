@@ -76,8 +76,20 @@ namespace gherkinexecutor {
         templateHeaderPrint("   void " + fullName + "(const " + dataType + "& values); ");
         templatePrint("    void " + parent->glueClass + "::" + fullName + "(const " + dataType + "& values ) {");
         templatePrint("        std::cout << \"---  \" << \"" + fullName + "\" << std::endl;");
-
-        if (dataType == "std::vector<std::vector<std::string>>") {
+        if (dataType == "const std::vector<std::string>" || dataType == "std::vector<std::string>")        {
+            std::cout << " Vector of string" << std::endl; 
+            if (Configuration::logIt) {
+                templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
+                templatePrint("        for (const auto& v : values) { log(v); }");
+            }
+            std::string name = listElement + "Internal";
+            templatePrint("        for (const " + listElement + "& value : values){");
+            templatePrint("             std::cout << value << std::endl;");
+            templatePrint("             // Add calls to production code and asserts");
+            templatePrint("              }");
+        }
+        else if (dataType == "std::vector<std::vector<std::string>>") {
+            std::cout << " Vector of vector of string" << std::endl;
             // Special handling for vector of vector of strings
             templatePrint("        for (const auto& row : values) {");
             templatePrint("            for (const auto& element : row) {");
@@ -93,6 +105,7 @@ namespace gherkinexecutor {
             }
         }
         else {
+            std::cout << " list of objects " << std::endl;
             // Original handling for other types
             if (Configuration::logIt) {
                 templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
@@ -134,17 +147,17 @@ namespace gherkinexecutor {
         const std::string& listElement) {
         if (checkForExistingTemplate(dataType, fullName)) return;
         std::cout << "Creating function template object for " << fullName << " with data type " << dataType << std::endl;   
-        if (dataType != "std::vector<std::vector<std::string>>") {
-            std::cerr << "Not creating function for " << fullName << " with data type " << dataType << std::endl;
-            return;
-        }
+        //if (dataType != "std::vector<std::vector<std::string>>") {
+        //    std::cerr << "Not creating function for " << fullName << " with data type " << dataType << std::endl;
+        //    return;
+        //}
         parent->glueFunctions[fullName] = dataType;
         templateHeaderPrint("   void " + fullName + "(const " + dataType + "& values); ");
         templatePrint("    void " + parent->glueClass + "::" + fullName + "(const " + dataType + "& values ) {");
         if (Configuration::logIt) {
             templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
             //templatePrint("    std::vector<std::vector<" + listElement + ">> is = convertListTo" + dataType + "(values);");
-        templatePrint("    for (const auto& row : is) {");
+        templatePrint("    for (const auto& row : values) {");
         templatePrint("        for (const auto& element : row) {");
         templatePrint("            std::cout << element << \" \";");
         if (Configuration::logIt) {
@@ -181,10 +194,6 @@ namespace gherkinexecutor {
 
     void TemplateConstruct::beginTemplate() {
        
-        for (const std::string& line : parent->linesToAddForDataAndGlue) {
-            templatePrint(line);
-        }
-
         if (Configuration::testFramework == "gtest") {
             templatePrint("#include <gtest/gtest.h>");
         }
@@ -215,8 +224,7 @@ namespace gherkinexecutor {
         templatePrint("");
         templateHeaderPrint("class " + parent->glueClass + " {");
         templateHeaderPrint("public:");
-        templateHeaderPrint("    std::string DNCString;");
-        templatePrint("std::string DNCString = \"" + Configuration::doNotCompare + "\";");
+        templateHeaderPrint("inline static std::string DNCString = \"" + Configuration::doNotCompare + "\";");
         templateHeaderPrint(parent->logIt());
         templateHeaderPrint("");
     }

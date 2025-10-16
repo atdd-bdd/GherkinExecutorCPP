@@ -51,6 +51,9 @@ namespace gherkinexecutor {
 
         parent->trace("Creating class for " + className);
         parent->dataNames[className] = "";
+        std::vector<DataValues> variables;
+        bool doInternal;
+        createVariableList(table, variables, doInternal);
 
         // Put each in a new file
         startDataFile(className, false);
@@ -67,7 +70,10 @@ namespace gherkinexecutor {
             dataPrintLn(line);
             dataPrintHeader(line);
         }
+
+        dataPrintLn("#include \"" + internalClassName + ".h\"");
         dataPrintHeader("#include \""+ internalClassName +".h\""); 
+
         //dataPrintLn("#include \"" + parent->dataHeaderFilename + "\"");
         dataPrintLn("#include \"" + className + ".h\"");
         processNamespaces(parent->packagePath);
@@ -78,9 +84,6 @@ namespace gherkinexecutor {
 
 
 
-        std::vector<DataValues> variables;
-        bool doInternal;
-        createVariableList(table, variables, doInternal);
 
         for (const DataValues& variable : variables) {
             parent->classDataNames.push_back(className + "#" + variable.name);
@@ -108,6 +111,8 @@ namespace gherkinexecutor {
         if (doInternal) {
             createInternalClass(internalClassName, className, variables, providedOtherClassName);
         }
+        else 
+            createInternalClassEmpty(internalClassName, className, variables, providedOtherClassName);
     }
     int DataConstruct::processNamespaces(const std::string& packagePath) {
         std::vector<std::string> parts = Translate::extractNamespaceParts(packagePath);
@@ -171,7 +176,8 @@ namespace gherkinexecutor {
         if (s == "boolean") return "bool";
         if (s == "Float") return "float";
         if (s == "Long") return "long";
-        if (s == "Byte") return "uint8_t";
+        if (s == "Byte") return "unsigned char";
+        if (s == "byte") return "unsigned char";
         if (s == "Short") return "short";
         if (s == "Integer") return "int";
         if (s == "Double") return "double";
@@ -266,12 +272,24 @@ namespace gherkinexecutor {
     }
 
     bool DataConstruct::primitiveDataType(const DataValues& variable) {
-        return (variable.dataType == "bool" || variable.dataType == "char" ||
-            variable.dataType == "int" || variable.dataType == "float" ||
-            variable.dataType == "double" || variable.dataType == "long" ||
-            variable.dataType == "uint8_t" || variable.dataType == "short");
+        return (
+            variable.dataType == "bool" ||
+            variable.dataType == "char" ||
+            variable.dataType == "signed char" ||
+            variable.dataType == "unsigned char" ||
+            variable.dataType == "short" ||
+            variable.dataType == "unsigned short" ||
+            variable.dataType == "int" ||
+            variable.dataType == "unsigned int" ||
+            variable.dataType == "long" ||
+            variable.dataType == "unsigned long" ||
+            variable.dataType == "long long" ||
+            variable.dataType == "unsigned long long" ||
+            variable.dataType == "float" ||
+            variable.dataType == "double" ||
+            variable.dataType == "long double"
+            );
     }
-
     void DataConstruct::createBuilderMethod(const std::vector<DataValues>& variables, const std::string& className) {
         addSuppressionOfWarnings();
         dataPrintHeader("    class Builder {");
@@ -520,6 +538,22 @@ namespace gherkinexecutor {
         dataPrintHeader("};");
         endDataFile();
     }
+    void DataConstruct::createInternalClassEmpty(const std::string& className, const std::string& otherClassName,
+        const std::vector<DataValues>& variables, bool providedClassName) {
+        std::string classNameInternal = className;
+        if (parent->dataNames.find(classNameInternal) != parent->dataNames.end()) {
+            classNameInternal += std::to_string(parent->stepCount);
+            parent->warning("Data name is duplicated, has been renamed " + classNameInternal);
+        }
+
+        parent->trace("Creating empty internal class for " + classNameInternal);
+        parent->dataNames[classNameInternal] = "";
+        startDataFile(className, providedClassName);
+        dataPrintHeader("#pragma once");
+        processNamespaces(parent->packagePath);
+        endDataFile();
+    }
+
 
     void DataConstruct::createDataTypeToStringObject(const std::string& className, const std::vector<DataValues>& variables) {
         dataPrintLn("    std::string " + className + "::toDataTypeString() {");
@@ -559,18 +593,28 @@ namespace gherkinexecutor {
         else {
             value = parent->quoteIt(variable.defaultVal);
         }
-      
         if (variable.dataType == "std::string") {
             return value;
         }
-        else if (variable.dataType == "int" || variable.dataType == "double" ||
-            variable.dataType == "uint8_t" || variable.dataType == "short" ||
-            variable.dataType == "long" || variable.dataType == "float" ||
-            variable.dataType == "bool" || variable.dataType == "char") {
+        else if (variable.dataType == "bool") {
+            return "std::string(" + value + " ? \"true\" : \"false\")";
+        }
+        else if (variable.dataType == "char" || variable.dataType == "signed char" || variable.dataType == "unsigned char") {
+            return "std::string(1, " + value + ")";
+        }
+        else if (variable.dataType == "short" || variable.dataType == "unsigned short") {
+            return "std::to_string(static_cast<int>(" + value + "))";
+        }
+        else if (
+            variable.dataType == "int" || variable.dataType == "unsigned int" ||
+            variable.dataType == "long" || variable.dataType == "unsigned long" ||
+            variable.dataType == "long long" || variable.dataType == "unsigned long long" ||
+            variable.dataType == "float" || variable.dataType == "double" || variable.dataType == "long double"
+            ) {
             return "std::to_string(" + value + ")";
         }
         else {
-            return value + ".to_string()";      
+            return value + ".to_string()";
         }
     }
 
@@ -579,12 +623,12 @@ namespace gherkinexecutor {
             startOneDataFile();
             return;
         }
-
+        
         std::string extension = Configuration::dataDefinitionFileExtension;
-        if (createTmpl) extension = "tmpl";
+        if (createTmpl) extension = "cpp.tmpl";
 
         std::string dataDefinitionPathname = Configuration::testSubDirectory + parent->featureDirectory +
-            parent->featureName + "/" + className + "." + extension;
+            parent->featureName + "/" + className + "_" + parent->featureName + "." + extension;
 
         try {
             dataDefinitionFile = std::make_unique<std::ofstream>(dataDefinitionPathname);
@@ -595,8 +639,7 @@ namespace gherkinexecutor {
         }
         std::string dataDefinitionHeaderPathname = Configuration::testSubDirectory + parent->featureDirectory +
             parent->featureName + "/" + className + "." + "h";
-
-        try {
+         try {
             dataDefinitionFileHeader = std::make_unique<std::ofstream>(dataDefinitionHeaderPathname);
         }
         catch (const std::exception& e) {

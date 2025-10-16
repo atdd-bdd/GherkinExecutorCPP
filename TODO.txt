@@ -1,18 +1,16 @@
 
 The expected results are in the folder in SimpleTest.    These work in CPP.
 
+In other languages, may need to alter the create list of list to an object static method.   
+    **** 
+
+    
+
 Steps:
 
-*** Check out configuration reading from yaml.   Not sure it's working for the arrays. 
-
-** translate ID.java into ID.cpp and make sure ID. h matches 
 
 Change name of tmpl file to cpp.tmpl 
 
-
-Create a feature_all_data.h  file that includes all the data type headers. 
-
-Finish creating the glue file header. (.h.tmpl)  
 
 Then check out.     
 

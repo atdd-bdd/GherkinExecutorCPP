@@ -41,6 +41,7 @@ namespace gherkinexecutor {
 
         void actOnData(const std::vector<std::string>& words);
         void endOneDataFile();
+        std::string alterDataType(const std::string& s);
 
     private:
         int processNamespaces(const std::string& packagePath);
@@ -62,11 +63,11 @@ namespace gherkinexecutor {
         void createConversionMethod(const std::string& internalClassName, const std::vector<DataValues>& variables, const std::string& className);
         void createInternalClass(const std::string& className, const std::string& otherClassName,
             const std::vector<DataValues>& variables, bool providedClassName);
+        void createInternalClassEmpty(const std::string& className, const std::string& otherClassName, const std::vector<DataValues>& variables, bool providedClassName);
         void createDataTypeToStringObject(const std::string& className, const std::vector<DataValues>& variables);
         void createToStringObject(const std::string& className, const std::string& otherClassName, const std::vector<DataValues>& variables);
         std::string makeValueToString(const DataValues& variable, bool makeNameValue);
         bool primitiveDataType(const DataValues& variable);
-        std::string alterDataType(const std::string& s);
         void checkHeaders(const std::vector<std::string>& headers);
         void startDataFile(const std::string& className, bool createTmpl);
         void startOneDataFile();

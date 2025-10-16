@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ApplicationToTest", "..\ApplicationToTest\ApplicationToTest.vcxproj", "{A965FEBD-92AA-4FB6-923B-42C819CFCFEC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestsForApplication", "..\TestsForApplication\TestsForApplication.vcxproj", "{9972F39E-1D35-4957-9F24-3203A5074D2F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestsForGherkinExectutorForCPP_", "..\TestsForApplication\TestsForApplication.vcxproj", "{9972F39E-1D35-4957-9F24-3203A5074D2F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

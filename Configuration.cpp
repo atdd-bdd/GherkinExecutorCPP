@@ -246,6 +246,19 @@ namespace gherkinexecutor {
 
         char parseChar(const std::string& value) {
             std::string unescaped = unescapeYamlString(value);
+            std::cout << "unescaped is '" << unescaped << "'" << std::endl;
+
+            // Remove quotes (single or double)
+            if (unescaped.length() >= 2) {
+                char first = unescaped.front();
+                char last = unescaped.back();
+                if ((first == '\'' && last == '\'') ||
+                    (first == '"' && last == '"')) {
+                    unescaped = unescaped.substr(1, unescaped.length() - 2);
+                    std::cout << "after removing quotes: '" << unescaped << "'" << std::endl;
+                }
+            }
+
             return unescaped.empty() ? ' ' : unescaped[0];
         }
 
@@ -359,6 +372,8 @@ namespace gherkinexecutor {
                 }
                 else if (key == "spaceCharacters") {
                     spaceCharacters = parseChar(value);
+                    std::cout << "value is '" << value << "'" << std::endl;
+                    std::cout << "***** Space character set to '" << spaceCharacters << "'" << std::endl;
                 }
                 else if (key == "addLineToString") {
                     addLineToString = parseBool(value);

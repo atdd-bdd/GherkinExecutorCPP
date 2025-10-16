@@ -440,7 +440,7 @@ namespace gherkinexecutor {
 
 
         std::string templateFilename = Configuration::testSubDirectory + featureDirectory + featureName + "/" +
-            featureName + "_glue.tmpl";
+            featureName + "_glue.cpp.tmpl";
         std::string templateFilenameHeader = Configuration::testSubDirectory + featureDirectory + featureName + "/" +
             featureName + "_glue.h.tmpl";
 
@@ -509,7 +509,7 @@ namespace gherkinexecutor {
         }
         else {
             if (addCleanup && !inCleanup) {
-                testPrint("        test_Cleanup(" + glueObject + "); // from previous");
+                testPrint("         test_Cleanup(" + glueObject + "); // from previous");
             }
             testPrint("        }"); // end previous scenario
         }
@@ -547,9 +547,9 @@ namespace gherkinexecutor {
             testPrint("        }"); // end previous scenario
         }
 
-        testPrint("    void test_" + fullNameToUse + "(" + glueClass + " " + glueObject + "){");
+        testPrint("    static void test_" + fullNameToUse + "(" + glueClass + " & " + glueObject + "){");
         if (Configuration::logIt) {
-            testPrint("        log(\"" + fullNameToUse + "\");");
+            testPrint("        " + featureName +"::log(\"" + fullNameToUse + "\");");
         }
     }
 
@@ -572,9 +572,9 @@ namespace gherkinexecutor {
             testPrint("        }"); // end previous scenario
         }
 
-        testPrint("    void test_" + fullNameToUse + "(" + glueClass + " " + glueObject + "){");
+        testPrint("    static void test_" + fullNameToUse + "(" + glueClass + " & " + glueObject + "){");
         if (Configuration::logIt) {
-            testPrint("        log(\"" + fullNameToUse + "\");");
+            testPrint("        " + featureName + "::log(\"" + fullNameToUse + "\");");
         }
 
     }
@@ -582,7 +582,7 @@ namespace gherkinexecutor {
         if (Configuration::logIt) {
             std::string filename = directoryName + "/log.txt";
             
-            return "public:  void log(const std::string& value) {\n" +
+            return "public:  static void log(const std::string& value) {\n" +
                 std::string(
                     "try {\n"
                     "  std::ofstream logFile(\"" + filename + "\", std::ios::app); // append mode\n"
@@ -841,31 +841,46 @@ namespace gherkinexecutor {
             value = quoteIt(variable.defaultVal);
         }
 
-        if ( variable.dataType == "std::string") {
+        if (variable.dataType == "std::string") {
             return value;
         }
-        else if (variable.dataType == "int" ) {
+        else if (variable.dataType == "int") {
             return "std::stoi(" + value + ")";
         }
-        else if (variable.dataType == "double" ) {
+        else if (variable.dataType == "double") {
             return "std::stod(" + value + ")";
         }
-        else if (variable.dataType == "int8_t") {
-            return "static_cast<int8_t>(std::stoi(" + value + "))";
+        else if (variable.dataType == "signed char") {
+            return "static_cast<signed char>((" + value + ".length() > 0 ? " + value + "[0] : ' '))";
+         }
+        else if (variable.dataType == "unsigned char") {
+            return "static_cast<unsigned char>((" + value + ".length() > 0 ? " + value + "[0] : ' '))";
         }
         else if (variable.dataType == "short") {
             return "static_cast<short>(std::stoi(" + value + "))";
         }
+        else if (variable.dataType == "unsigned short") {
+            return "static_cast<unsigned short>(std::stoul(" + value + "))";
+        }
         else if (variable.dataType == "long") {
             return "std::stol(" + value + ")";
+        }
+        else if (variable.dataType == "unsigned long") {
+            return "std::stoul(" + value + ")";
         }
         else if (variable.dataType == "long long") {
             return "std::stoll(" + value + ")";
         }
+        else if (variable.dataType == "unsigned long long") {
+            return "std::stoull(" + value + ")";
+        }
         else if (variable.dataType == "float") {
             return "std::stof(" + value + ")";
         }
-        else if (variable.dataType == "bool" ) {
+        else if (variable.dataType == "long double") {
+            return "static_cast<long double>(std::stold(" + value + "))";
+        }
+        else if (variable.dataType == "bool") {
             return "(" + value + " == \"true\" || " + value + " == \"1\")";
         }
         else if (variable.dataType == "char") {
@@ -873,12 +888,6 @@ namespace gherkinexecutor {
         }
         else if (variable.dataType == "unsigned int") {
             return "static_cast<unsigned int>(std::stoul(" + value + "))";
-        }
-        else if (variable.dataType == "unsigned long") {
-            return "std::stoul(" + value + ")";
-        }
-        else if (variable.dataType == "unsigned long long") {
-            return "std::stoull(" + value + ")";
         }
         else {
             std::string result = fromImportData(variable.dataType, value);
@@ -890,7 +899,7 @@ namespace gherkinexecutor {
     }
     void Translate::endUp() {
         if (finalCleanup) {
-            testPrint("        test_Cleanup(" + glueObject + "); // at the end");
+            testPrint("         test_Cleanup(" + glueObject + "); // at the end");
         }
 
         if (scenarioCount == 0) {

@@ -35,7 +35,7 @@ This documents the setup required for C++.    It assumes you have some experienc
 
 - A folder `gherkinexecutor/Feature_starting`is created. 
 
-- Go to that folder.  Do two renames.   `Feature_Starting_glue.tmpl `to `Feature_Start_glue.cpp`   and   `Feature_Starting_glue.h.tmpl` to `Feature_Starting_glue. h`
+- Go to that folder.  Do two renames.   `Feature_Starting_glue.cpp.tmpl `to `Feature_Start_glue.cpp`   and   `Feature_Starting_glue.h.tmpl` to `Feature_Starting_glue. h`
 
 - You will need to add all the files in the folder to Visual Studio (if that's what you are using).  
 

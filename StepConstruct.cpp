@@ -61,11 +61,13 @@ namespace gherkinexecutor {
 
     void StepConstruct::stringToString(const std::vector<std::string>& table, const std::string& fullName) {
         std::string s = std::to_string(getStepNumberInScenario());
-        testPrint("        std::string string" + s + " = R\"(");
+        testPrint("        std::string string" + s + " = ");
+        std::string prefix = "R\"(";
         for (const auto& line : table) {
-            testPrint("            " + line);
+            testPrint(prefix + line);
+            prefix = ""; 
         }
-        testPrint("            )\";");
+        testPrint(")\";");
         testPrint("        " + getGlueObject() + "." + fullName + "(string" + s + ");");
         getTemplateConstruct().makeFunctionTemplate("std::string", fullName);
     }
@@ -73,6 +75,8 @@ namespace gherkinexecutor {
     void StepConstruct::tableToListOfListOfObject(const std::vector<std::string>& table,
         const std::string& fullName,
         const std::string& className) {
+        std::cout << "table to list of list of object " << fullName << " " << className <<std::endl;
+    
         std::string s = std::to_string(getStepNumberInScenario());
         std::string dataType = "std::vector<std::vector<std::string>>";
 
@@ -156,13 +160,14 @@ namespace gherkinexecutor {
         }
     }
 
-    void StepConstruct::createConvertTableToListOfListOfObjectMethod(const std::string& toClass) {
+    void StepConstruct::createConvertTableToListOfListOfObjectMethod(const std::string& toClassOriginal) {
         // Note: This would need DataConstruct::DataValues equivalent in C++
-        // For now, using a placeholder
-        std::string convert = "/* Need C++ equivalent of makeValueFromString */";
-
+        std::cout << "Creating convertTableToListOfListOfObjectMethod for " << toClassOriginal << std::endl;       
+        std::string toClass = this->outer->dataConstruct->alterDataType(toClassOriginal); 
+        std::cout << "Altered to class " << toClass << std::endl;
+        std::string convert = "std::string(s)";
         std::string template_str = R"(
-                public static std::vector<std::vector<)" + toClass + R"(>> convertListTo)" + toClass + R"((const std::vector<std::vector<std::string>>& stringList) {
+                static std::vector<std::vector<)" + toClass + R"(>> convertListTo)" + toClass + R"((const std::vector<std::vector<std::string>>& stringList) {
                     std::vector<std::vector<)" + toClass + R"(>> classList;
                     for (const auto& innerList : stringList) {
                         std::vector<)" + toClass + R"(> innerClassList;
@@ -180,11 +185,13 @@ namespace gherkinexecutor {
 
     void StepConstruct::tableToString(const std::vector<std::string>& table, const std::string& fullName) {
         std::string s = std::to_string(getStepNumberInScenario());
-        testPrint("        std::string table" + s + " = R\"(");
+        testPrint("        std::string table" + s + " = ");
+        std::string prefix = "R\"(";
         for (const auto& line : table) {
-            testPrint("            " + line);
+            testPrint(prefix + line);
+            prefix = "";
         }
-        testPrint("            )\";");
+        testPrint(")\";");
         testPrint("        " + getGlueObject() + "." + fullName + "(table" + s + ");");
         getTemplateConstruct().makeFunctionTemplate("std::string", fullName);
     }
@@ -294,8 +301,9 @@ namespace gherkinexecutor {
         }
 
         for (size_t i = 0; i < size; i++) {
-            // Note: Need C++ equivalent of Configuration.spaceCharacters replacement
-            std::string value = "\"" + values[i] + "\"";
+            std::string temp = values[i];
+            std::replace(temp.begin(), temp.end(), Configuration::spaceCharacters, ' ');
+            std::string value = "\"" + temp + "\"";
             testPrint("                ." + makeBuildName(headers[i]) + "(" + value + ")");
         }
         testPrint("                .build()");
