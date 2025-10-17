@@ -454,7 +454,8 @@ namespace gherkinexecutor {
             testFileHeader = std::make_unique<std::ofstream>(testPathnameHeader);
             templateConstruct->glueTemplateFile = std::make_unique<std::ofstream>(templateFilename);
             templateConstruct->glueTemplateFileHeader = std::make_unique<std::ofstream>(templateFilenameHeader);
-            dataHeaderFile = std::make_unique<std::ofstream>(dataHeaderPathname);
+            if (!Configuration::oneDataFile)
+                dataHeaderFile = std::make_unique<std::ofstream>(dataHeaderPathname);
         }
         catch (const std::exception& e) {
             error("IO Exception in setting up the files");
@@ -638,6 +639,7 @@ namespace gherkinexecutor {
         }
     }
     void Translate::dataHeaderPrint(const std::string& line) {
+        if (Configuration::oneDataFile) return;
         try {
             *dataHeaderFile << line << std::endl;
         }
@@ -927,15 +929,16 @@ namespace gherkinexecutor {
         catch (const std::exception& e) {
             error("Error in closing ");
         }
-        try {
-            if (dataHeaderFile) {
-                dataHeaderFile->close();
+        if (!Configuration::oneDataFile) {
+            try {
+                if (dataHeaderFile) {
+                    dataHeaderFile->close();
+                }
+            }
+            catch (const std::exception& e) {
+                error("Error in closing ");
             }
         }
-        catch (const std::exception& e) {
-            error("Error in closing ");
-        }
-
         templateConstruct->endTemplate();
 
         if (errorOccurred) {

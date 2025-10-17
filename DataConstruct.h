@@ -35,6 +35,8 @@ namespace gherkinexecutor {
         std::unique_ptr<std::ofstream> dataDefinitionFileHeader;
         static const std::string throwString;
         static bool oneDataFileStarted;
+        static bool oneDataFileHeaderWritten; 
+        bool doInternal = false;
 
     public:
         explicit DataConstruct(Translate* parent) : parent(parent) {}

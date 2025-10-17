@@ -41,7 +41,7 @@ namespace gherkinexecutor {
 
         for (const ImportData& im : imports) {
             if (!im.importName.empty()) {
-                std::string value = "import " + im.importName + ";";
+                std::string value = "#include " + im.importName;
                 parent->linesToAddForDataAndGlue.push_back(value);
             }
         }

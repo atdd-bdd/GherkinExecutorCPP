@@ -14,6 +14,7 @@ namespace gherkinexecutor {
     // Static member initialization
     const std::string DataConstruct::throwString = "";
     bool DataConstruct::oneDataFileStarted = false;
+    bool DataConstruct::oneDataFileHeaderWritten = false;
 
     // Implementation
     void DataConstruct::actOnData(const std::vector<std::string>& words) {
@@ -29,10 +30,12 @@ namespace gherkinexecutor {
         if (words.size() > 2) {
             internalClassName = words[2];
             providedOtherClassName = true;
+            doInternal = false; 
         }
         else {
             providedOtherClassName = false;
             internalClassName = className + "Internal";
+            doInternal = true;      
         }
 
         auto follow = parent->lookForFollow();
@@ -52,31 +55,43 @@ namespace gherkinexecutor {
         parent->trace("Creating class for " + className);
         parent->dataNames[className] = "";
         std::vector<DataValues> variables;
-        bool doInternal;
+
         createVariableList(table, variables, doInternal);
 
         // Put each in a new file
         startDataFile(className, false);
+        if (!Configuration::oneDataFile)  {
+
+
         parent->dataHeaderPrint("#include \"" + className + ".h\"");
         parent->dataHeaderPrint("#include \"" + internalClassName + ".h\"");
-        dataPrintHeader("#pragma once");
-        dataPrintLn("#include <algorithm>");
-        dataPrintLn("#include <sstream>");
-        dataPrintLn("#include <iostream>");
-        dataPrintHeader("#include <string>");
-        dataPrintHeader("#include <vector>");
-
-        for (const std::string& line : parent->linesToAddForDataAndGlue) {
-            dataPrintLn(line);
-            dataPrintHeader(line);
+            }
+        if (!Configuration::oneDataFile || !oneDataFileHeaderWritten) {
+            std::cout << "*** Writing header of cpp and h file " << std::endl;
+            dataPrintHeader("#pragma once");
+            dataPrintLn("#include <algorithm>");
+            dataPrintLn("#include <sstream>");
+            dataPrintLn("#include <iostream>");
+            dataPrintHeader("#include <string>");
+            dataPrintHeader("#include <vector>");
+            if (Configuration::oneDataFile)
+                dataPrintLn("#include \"" + parent->featureName + "_data." + "h\"");
+            for (const std::string& line : parent->linesToAddForDataAndGlue) {
+                dataPrintLn(line);
+                dataPrintHeader(line);
+            }
         }
+        if (!Configuration::oneDataFile) {
+            dataPrintLn("#include \"" + internalClassName + ".h\"");
+            dataPrintHeader("#include \"" + internalClassName + ".h\"");
 
-        dataPrintLn("#include \"" + internalClassName + ".h\"");
-        dataPrintHeader("#include \""+ internalClassName +".h\""); 
-
-        //dataPrintLn("#include \"" + parent->dataHeaderFilename + "\"");
-        dataPrintLn("#include \"" + className + ".h\"");
-        processNamespaces(parent->packagePath);
+            //dataPrintLn("#include \"" + parent->dataHeaderFilename + "\"");
+            dataPrintLn("#include \"" + className + ".h\"");
+        }
+        if (!Configuration::oneDataFile || !oneDataFileHeaderWritten) {
+            processNamespaces(parent->packagePath);
+            oneDataFileHeaderWritten = true;
+        }
         addSuppressionOfWarnings();
         dataPrintHeader("class " + internalClassName + ";");
         dataPrintHeader("class " + className + " {");
@@ -136,7 +151,7 @@ namespace gherkinexecutor {
 
     void DataConstruct::createVariableList(const std::vector<std::string>& table, std::vector<DataValues>& variables, bool& doInternal) {
         bool headerLine = true;
-        doInternal = false;
+       
 
         for (const std::string& line : table) {
             if (headerLine) {
@@ -144,7 +159,7 @@ namespace gherkinexecutor {
                 checkHeaders(headers);
                 headerLine = false;
 
-                if (headers.size() > 2) doInternal = true;
+                
                 continue;
             }
 
@@ -161,7 +176,7 @@ namespace gherkinexecutor {
                 variables.emplace_back(parent->makeName(elements[0]), elements[1], alterDataType(elements[2]));
             }
             else {
-                variables.emplace_back(parent->makeName(elements[0]), elements[1]);
+                variables.emplace_back(parent->makeName(elements[0]), elements[1], "std::string");
             }
         }
     }
@@ -505,18 +520,20 @@ namespace gherkinexecutor {
         parent->trace("Creating internal class for " + classNameInternal);
         parent->dataNames[classNameInternal] = "";
         startDataFile(className, providedClassName);
-        dataPrintHeader("#pragma once");
-        dataPrintHeader("#include <string>");
-        dataPrintHeader("#include <vector>");
+        if (!Configuration::oneDataFile) {
+            dataPrintHeader("#pragma once");
+            dataPrintHeader("#include <string>");
+            dataPrintHeader("#include <vector>");
 
-        for (const std::string& line : parent->linesToAddForDataAndGlue) {
-            dataPrintLn(line);
-            dataPrintHeader(line);
+            for (const std::string& line : parent->linesToAddForDataAndGlue) {
+                dataPrintLn(line);
+                dataPrintHeader(line);
+            }
+            dataPrintLn("#include \"" + otherClassName + ".h\"");
+            dataPrintLn("#include \"" + className + ".h\"");
+            processNamespaces(parent->packagePath);
         }
-         dataPrintLn("#include \"" + otherClassName + ".h\"");
-        dataPrintLn("#include \"" + className + ".h\"");
         //dataPrintLn("#include \"" + parent->dataHeaderFilename + "\"");
-        processNamespaces(parent->packagePath);
         dataPrintHeader("class " + otherClassName + ";");
         
 
@@ -540,6 +557,8 @@ namespace gherkinexecutor {
     }
     void DataConstruct::createInternalClassEmpty(const std::string& className, const std::string& otherClassName,
         const std::vector<DataValues>& variables, bool providedClassName) {
+        std::cout << "** skipping creating internal class for " << className << std::endl;
+        return;
         std::string classNameInternal = className;
         if (parent->dataNames.find(classNameInternal) != parent->dataNames.end()) {
             classNameInternal += std::to_string(parent->stepCount);
@@ -650,12 +669,15 @@ namespace gherkinexecutor {
 
     void DataConstruct::startOneDataFile() {
         if (oneDataFileStarted) return;
+        std::cout << "** Starting one data file" << std::endl;
+
         oneDataFileStarted = true;
+        oneDataFileHeaderWritten = false; 
 
         std::string extension = Configuration::dataDefinitionFileExtension;
         std::string dataDefinitionPathname = Configuration::testSubDirectory + parent->featureDirectory +
             parent->featureName + "/" + parent->featureName + "_data." + extension;
-
+        std::cout << "** Data file " << dataDefinitionPathname << std::endl;    
         try {
             dataDefinitionFile = std::make_unique<std::ofstream>(dataDefinitionPathname);
         }
@@ -665,7 +687,14 @@ namespace gherkinexecutor {
         }
         std::string dataDefinitionHeaderPathname = Configuration::testSubDirectory + parent->featureDirectory +
             parent->featureName + "/" + parent->featureName + "_data." + "h";
-
+        std::cout << "** Data header file " << dataDefinitionHeaderPathname << std::endl;    
+         try {
+            dataDefinitionFileHeader = std::make_unique<std::ofstream>(dataDefinitionHeaderPathname);
+        }
+        catch (const std::exception& e) {
+            parent->error("IO Exception in setting up the files");
+            parent->error(" Writing " + dataDefinitionHeaderPathname);
+        }
         try {
             dataDefinitionFileHeader = std::make_unique<std::ofstream>(dataDefinitionHeaderPathname);
         }

@@ -51,6 +51,8 @@ namespace gherkinexecutor {
         try {
             std::string filepath = Configuration::featureSubDirectory + fileName;
             Translate::printFlow("Path is " + filepath);
+            std::filesystem::path cwd = std::filesystem::current_path();
+            std::cout << "**** Current directory: " << cwd << std::endl;
 
             std::ifstream file(filepath);
             if (!file.is_open()) {
@@ -105,6 +107,7 @@ namespace gherkinexecutor {
                     }
 
                     outer->trace("Including " + includedFileName);
+                    std::cout << "**** Reading from " << includedFileName << std::endl;
 
                     if (includedFileName.find(".csv") != std::string::npos) {
                         includeCSVFile(includedFileName);

@@ -61,7 +61,7 @@ namespace gherkinexecutor {
         templatePrint("        std::cout << value << std::endl;");
 
         if (!Configuration::inTest) {
-            templatePrint("        fail(\"Must implement\");");
+            templatePrint("        FAIL(\"Must implement\");");
         }
 
         templatePrint("    }");
