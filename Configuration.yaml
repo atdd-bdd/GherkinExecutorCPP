@@ -1,11 +1,11 @@
 # GherkinExecutor Configuration
 configuration:
   logIt: true
-  inTest: true
+  inTest: false
   traceOn: false
   addLineToString: true
   searchTree: false
-  oneDataFile: false
+  oneDataFile: true
   spaceCharacters: '~'
   doNotCompare: "?DNC?"
   currentDirectory: ""
@@ -15,13 +15,14 @@ configuration:
   packageName: "gherkinexecutor"
   testSubDirectory: "gherkinexecutor/"
   dataDefinitionFileExtension: "cpp"
-  testFramework: "google"
+  testFramework: "gtest"
   addToPackageName: ""
   filterExpression: ""
   tagFilter: "@smoke"
   linesToAddForDataAndGlue:
-    - "#include <filesystem>"
+    - "#include <iostream>"
   featureFiles:
-    - "simple_test.featurex"
+    - "starting.featurex"
+
 
 

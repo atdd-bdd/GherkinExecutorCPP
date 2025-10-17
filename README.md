@@ -25,8 +25,6 @@ This documents the setup required for C++.    It assumes you have some experienc
 - Download` configuration.yaml `  [https://github.com/atdd-bdd/TestsForGherkinExecutorForCPP/blob/main/Configuration.yaml](https://github.com/atdd-bdd/GherkinExecutorForCSharp/blob/main/Translaste.cs)
   Download` starting.featurex` https://github.com/atdd-bdd/TestsForGherkinExecutorForCPP/blob/main/starting.featurex](https://github.com/atdd-bdd/GherkinExecutorForCSharp/blob/main/GherkinExecutor/starting.featurex)
 
-- Edit the` configuration.yaml file` and change  ` inTest: false `
-
 - Now open up a command window and run the following,  substituting the path to the executable.  This should be run in the main directory of the test project (where the configuration and featurex files are located).   
 
 ```
@@ -43,10 +41,4 @@ This documents the setup required for C++.    It assumes you have some experienc
 
 - Now implement the production code to make the tests pass 
 
-- ```
-  Now implement the production code to make the test pass.
-  ```
-
-If you add a `Scenario `to the feature file, you need to rerun `GherkinExecutorForCPP`.     If you add new steps, you need to copy the new glue code from the `glue tmpl `file to the` glue cpp` file and copy the prototype from` glue.h.tmpl` to` glue.h` file.
-
-
+If you add a `Scenario `to the feature file, you need to rerun `GherkinExecutorForCPP`.     If you add new steps, you need to copy the new glue code from the `glue.cpp.tmpl `file to the` glue.cpp` file and copy the prototype from` glue.h.tmpl` to` glue.h` file.

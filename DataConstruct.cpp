@@ -378,52 +378,48 @@ namespace gherkinexecutor {
         dataPrintLn("    }");
     }
 
-    void DataConstruct::createToJSONMethod(const std::vector<DataValues>& variables
-        , const std::string& className) {
-        dataPrintLn("    std::string " + className + "::toJson() const { ");
-        dataPrintHeader("    std::string toJson() const ;");
-        dataPrintLn("        return \"{\"");
+    void DataConstruct::createToJSONMethod(const std::vector<DataValues>& variables, const std::string& className) {
+        dataPrintHeader("    std::string toJson() const;");
+        dataPrintLn("    std::string " + className + "::toJson() const {");
+        dataPrintLn("        std::ostringstream oss;");
+        dataPrintLn("        oss << \"{\";");
 
-        std::string comma = "";
-        for (const DataValues& variable : variables) {
-            dataPrintLn("            " + comma + "\"\\\"" + variable.name + "\\\":\" \"\\\"\" + " + variable.name + " + \"\\\"\"");
-            comma = "\",\" + ";
+        for (size_t i = 0; i < variables.size(); ++i) {
+            const auto& var = variables[i];
+            std::string comma = (i > 0) ? " << \",\" " : "";
+            dataPrintLn("        oss" + comma + " << \"\\\"" + var.name + "\\\":\" << \"\\\"\" << " + var.name + " << \"\\\"\";");
         }
-        dataPrintLn("            + \"}\";");
+
+        dataPrintLn("        oss << \"}\";");
+        dataPrintLn("        return oss.str();");
         dataPrintLn("    }");
     }
 
     void DataConstruct::createFromJSONMethod(const std::vector<DataValues>& variables, const std::string& className) {
-        dataPrintLn("    " + className + " " + className + "::fromJson(const std::string & json) { ");
-        dataPrintHeader("    static " + className + " fromJson(const std::string& json) ;");
+        dataPrintHeader("    static " + className + " fromJson(const std::string& json);");
+        dataPrintLn("    " + className + " " + className + "::fromJson(const std::string& json) {");
         dataPrintLn("        " + className + " instance;");
-        dataPrintLn("        ");
         dataPrintLn("        std::string cleanJson = json;");
         dataPrintLn("        cleanJson.erase(std::remove_if(cleanJson.begin(), cleanJson.end(), ::isspace), cleanJson.end());");
         dataPrintLn("        cleanJson.erase(std::remove(cleanJson.begin(), cleanJson.end(), '{'), cleanJson.end());");
         dataPrintLn("        cleanJson.erase(std::remove(cleanJson.begin(), cleanJson.end(), '}'), cleanJson.end());");
-        dataPrintLn("        ");
         dataPrintLn("        std::stringstream ss(cleanJson);");
         dataPrintLn("        std::string pair;");
-        dataPrintLn("        ");
         dataPrintLn("        while (std::getline(ss, pair, ',')) {");
         dataPrintLn("            size_t colonPos = pair.find(':');");
         dataPrintLn("            if (colonPos == std::string::npos) continue;");
-        dataPrintLn("            ");
         dataPrintLn("            std::string key = pair.substr(0, colonPos);");
         dataPrintLn("            std::string value = pair.substr(colonPos + 1);");
-        dataPrintLn("            ");
         dataPrintLn("            key.erase(std::remove(key.begin(), key.end(), '\\\"'), key.end());");
         dataPrintLn("            value.erase(std::remove(value.begin(), value.end(), '\\\"'), value.end());");
-        dataPrintLn("            ");
 
-        bool firstCase = true;
-        for (const DataValues& variable : variables) {
-            std::string ifElse = firstCase ? "if" : "else if";
-            dataPrintLn("            " + ifElse + " (key == \"" + variable.name + "\") {");
-            dataPrintLn("                instance." + variable.name + " = value;");
+        bool first = true;
+        for (const auto& var : variables) {
+            std::string prefix = first ? "if" : "else if";
+            dataPrintLn("            " + prefix + " (key == \"" + var.name + "\") {");
+            dataPrintLn("                instance." + var.name + " = value;");
             dataPrintLn("            }");
-            firstCase = false;
+            first = false;
         }
 
         dataPrintLn("            else {");
@@ -435,45 +431,47 @@ namespace gherkinexecutor {
     }
 
     void DataConstruct::createTableToJSONMethod(const std::string& className) {
-        dataPrintHeader("    static std::string " + className + "::listToJson(const std::vector<" + className + ">&list); "); 
-        std::string code = R"(    std::string listToJson(const std::vector<CLASSNAME>& list) {
-        std::stringstream jsonBuilder;
-        jsonBuilder << "[";
-        
-        for (size_t i = 0; i < list.size(); i++) {
-            jsonBuilder << list[i].toJson();
-            if (i < list.size() - 1) {
-                jsonBuilder << ",";
-            }
-        }
-        
-        jsonBuilder << "]";
-        return jsonBuilder.str();
-    })";
-
-        size_t pos = 0;
-        while ((pos = code.find("CLASSNAME")) != std::string::npos) {
-            code.replace(pos, 9, className);
-        }
-        dataPrintLn(code);
+        dataPrintHeader("    static std::string listToJson(const std::vector<" + className + ">& list);");
+        dataPrintLn("    std::string " + className + "::listToJson(const std::vector<" + className + ">& list) {");
+        dataPrintLn("        std::ostringstream oss;");
+        dataPrintLn("        oss << \"[\";");
+        dataPrintLn("        for (size_t i = 0; i < list.size(); ++i) {");
+        dataPrintLn("            oss << list[i].toJson();");
+        dataPrintLn("            if (i + 1 < list.size()) oss << \",\";");
+        dataPrintLn("        }");
+        dataPrintLn("        oss << \"]\";");
+        dataPrintLn("        return oss.str();");
+        dataPrintLn("    }");
     }
-
     void DataConstruct::createJSONToTableMethod(const std::string& className) {
-        std::string code = "";
-        //dataPrintHeader("    static std::vector<" + className + "> listFromJson(const std::string& json) ;");   
-        /*R"(    static std::vector<CLASSNAME> listFromJson(const std::string& json) {
-            std::vector<CLASSNAME> list;
-            // JSON parsing implementation
-            return list;
-        })";*/
-
-        size_t pos = 0;
-        while ((pos = code.find("CLASSNAME")) != std::string::npos) {
-            code.replace(pos, 9, className);
-        }
-        //dataPrintLn(code);
+        dataPrintHeader("    static std::vector<" + className + "> fromJsonList(const std::string& json);");
+        dataPrintLn("    std::vector<" + className + "> " + className + "::fromJsonList(const std::string& json) {");
+        dataPrintLn("        std::vector<" + className + "> result;");
+        dataPrintLn("        std::string clean = json;");
+        dataPrintLn("        clean.erase(std::remove_if(clean.begin(), clean.end(), ::isspace), clean.end());");
+        dataPrintLn("        std::string buffer;");
+        dataPrintLn("        int braceDepth = 0;");
+        dataPrintLn("        bool inObject = false;");
+        dataPrintLn("        for (char ch : clean) {");
+        dataPrintLn("            if (ch == '{') {");
+        dataPrintLn("                if (!inObject) {");
+        dataPrintLn("                    buffer.clear();");
+        dataPrintLn("                    inObject = true;");
+        dataPrintLn("                }");
+        dataPrintLn("                ++braceDepth;");
+        dataPrintLn("            }");
+        dataPrintLn("            if (inObject) buffer += ch;");
+        dataPrintLn("            if (ch == '}') {");
+        dataPrintLn("                --braceDepth;");
+        dataPrintLn("                if (braceDepth == 0 && inObject) {");
+        dataPrintLn("                    result.push_back(" + className + "::fromJson(buffer));");
+        dataPrintLn("                    inObject = false;");
+        dataPrintLn("                }");
+        dataPrintLn("            }");
+        dataPrintLn("        }");
+        dataPrintLn("        return result;");
+        dataPrintLn("    }");
     }
-
     void DataConstruct::createMergeMethod(const std::vector<DataValues>& variables, const std::string& className) {
         dataPrintHeader("    static std::vector<" + className + "> " + className + "::merge(const std::vector<" + className + ">&values, const std::vector<" + className + ">&toMerge); ");  
         dataPrintLn("    static std::vector<" + className + "> merge(const std::vector<" + className + ">& values, const std::vector<" + className + ">& toMerge) {");
