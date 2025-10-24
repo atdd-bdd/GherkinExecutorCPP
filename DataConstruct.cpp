@@ -37,7 +37,6 @@ namespace gherkinexecutor {
             internalClassName = className + "Internal";
             doInternal = true;      
         }
-
         auto follow = parent->lookForFollow();
         std::string followType = follow.first;
         std::vector<std::string> table = follow.second;
@@ -50,6 +49,9 @@ namespace gherkinexecutor {
         if (parent->dataNames.find(className) != parent->dataNames.end()) {
             className += std::to_string(parent->stepCount);
             parent->warning("Data name is duplicated, has been renamed " + className);
+            if (doInternal) 
+                internalClassName = className + "Internal";
+            std::cout << " Renaming classnames to " << className << "  " << internalClassName << std::endl; 
         }
 
         parent->trace("Creating class for " + className);
@@ -67,7 +69,6 @@ namespace gherkinexecutor {
         parent->dataHeaderPrint("#include \"" + internalClassName + ".h\"");
             }
         if (!Configuration::oneDataFile || !oneDataFileHeaderWritten) {
-            std::cout << "*** Writing header of cpp and h file " << std::endl;
             dataPrintHeader("#pragma once");
             dataPrintLn("#include <algorithm>");
             dataPrintLn("#include <sstream>");
@@ -473,8 +474,8 @@ namespace gherkinexecutor {
         dataPrintLn("    }");
     }
     void DataConstruct::createMergeMethod(const std::vector<DataValues>& variables, const std::string& className) {
-        dataPrintHeader("    static std::vector<" + className + "> " + className + "::merge(const std::vector<" + className + ">&values, const std::vector<" + className + ">&toMerge); ");  
-        dataPrintLn("    static std::vector<" + className + "> merge(const std::vector<" + className + ">& values, const std::vector<" + className + ">& toMerge) {");
+        dataPrintHeader("    static std::vector<" + className + "> " + "merge(const std::vector<" + className + ">&values, const std::vector<" + className + ">&toMerge); ");  
+        dataPrintLn("    std::vector<" + className + "> " + className + "::merge(const std::vector<" + className + ">&values, const std::vector<" + className + ">&toMerge) { ");
         dataPrintLn("        " + className + " toAdd = toMerge[0];");
         dataPrintLn("        std::vector<" + className + "> result;");
         dataPrintLn("        for (const auto& value : values) {");
@@ -512,7 +513,7 @@ namespace gherkinexecutor {
         std::string classNameInternal = className;
         if (parent->dataNames.find(classNameInternal) != parent->dataNames.end()) {
             classNameInternal += std::to_string(parent->stepCount);
-            parent->warning("Data name is duplicated, has been renamed " + classNameInternal);
+            parent->warning("Internal data name is duplicated, has been renamed " + classNameInternal);
         }
 
         parent->trace("Creating internal class for " + classNameInternal);
@@ -532,9 +533,9 @@ namespace gherkinexecutor {
             processNamespaces(parent->packagePath);
         }
         //dataPrintLn("#include \"" + parent->dataHeaderFilename + "\"");
-        dataPrintHeader("class " + otherClassName + ";");
-        
-
+        if(!Configuration::oneDataFile)
+            dataPrintHeader("class " + otherClassName + ";");
+       
         addSuppressionOfWarnings();
 
         dataPrintHeader("class " + className + " {");
@@ -555,7 +556,7 @@ namespace gherkinexecutor {
     }
     void DataConstruct::createInternalClassEmpty(const std::string& className, const std::string& otherClassName,
         const std::vector<DataValues>& variables, bool providedClassName) {
-        std::cout << "** skipping creating internal class for " << className << std::endl;
+        parent->trace("** Skipping creating internal class for " + className); 
         return;
         std::string classNameInternal = className;
         if (parent->dataNames.find(classNameInternal) != parent->dataNames.end()) {
@@ -667,7 +668,7 @@ namespace gherkinexecutor {
 
     void DataConstruct::startOneDataFile() {
         if (oneDataFileStarted) return;
-        std::cout << "** Starting one data file" << std::endl;
+        parent->trace("Starting one data file"); 
 
         oneDataFileStarted = true;
         oneDataFileHeaderWritten = false; 
@@ -675,7 +676,6 @@ namespace gherkinexecutor {
         std::string extension = Configuration::dataDefinitionFileExtension;
         std::string dataDefinitionPathname = Configuration::testSubDirectory + parent->featureDirectory +
             parent->featureName + "/" + parent->featureName + "_data." + extension;
-        std::cout << "** Data file " << dataDefinitionPathname << std::endl;    
         try {
             dataDefinitionFile = std::make_unique<std::ofstream>(dataDefinitionPathname);
         }
@@ -685,7 +685,6 @@ namespace gherkinexecutor {
         }
         std::string dataDefinitionHeaderPathname = Configuration::testSubDirectory + parent->featureDirectory +
             parent->featureName + "/" + parent->featureName + "_data." + "h";
-        std::cout << "** Data header file " << dataDefinitionHeaderPathname << std::endl;    
          try {
             dataDefinitionFileHeader = std::make_unique<std::ofstream>(dataDefinitionHeaderPathname);
         }
@@ -703,7 +702,7 @@ namespace gherkinexecutor {
     }
 
     void DataConstruct::endDataFile() {
-        if (Configuration::oneDataFile) return;
+        if (Configuration::oneDataFile) return; 
         endNamespace(parent->packagePath);
         try {
             if (dataDefinitionFile) {
@@ -725,7 +724,7 @@ namespace gherkinexecutor {
     }
 
     void DataConstruct::endOneDataFile() {
-        if (!Configuration::oneDataFile || !oneDataFileStarted) return;
+        //if (!Configuration::oneDataFile || !oneDataFileStarted) return;
         endNamespace(parent->packagePath);
         try {
             if (dataDefinitionFile) {

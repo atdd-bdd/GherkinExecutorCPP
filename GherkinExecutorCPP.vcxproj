@@ -130,7 +130,6 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="DataConstruct.cpp" />
     <ClCompile Include="DefineConstruct.h" />
-    <ClCompile Include="GherkinExecutorCPP.cpp" />
     <ClCompile Include="ImportConstruct.cpp" />
     <ClCompile Include="InputIterator.cpp" />
     <ClCompile Include="StepConstruct.cpp" />

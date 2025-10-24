@@ -1,39 +1,7 @@
 
-The expected results are in the folder in SimpleTest.    These work in CPP.
+GherkinExecutorForCPP  To Do List
+Check with gcc compiler and eclipse IDE.  
 
-In other languages, may need to alter the create list of list to an object static method.   
-    **** 
-
-    
-
-Steps:
-
-
-Change name of tmpl file to cpp.tmpl 
-
-
-Then check out.     
-
-Will not need header file for the test file, since gtest calls it.   
-
-1. Need to add creating a header file to match the methods that are being output. 
-    Do this in parallel as each method is added.  
-    Need namespace surrounding everything.   and "end namespace"
-    test_header()     data_header() or something like that 
-    The header will have a .h.tmpl on it. and the other with .cpp.tmpl 
-    *** Mostly done 
-2. All files must have #include pch.h -  NO **** 
-3. Change every creation method to match what is in the expected result file.
-4. Update the data types.
-    int, char, float, bool, double, void, wchar_,  
-    short, long, long long, unsigned for all of these 
-    *** Check this 
-
-4. Then start on example.featurex and then the remainder.  
-    **** Started,  need some work - ID basically.   
-        Take out include "data.h" for the data construct 
-
-
-Add the other test frameworks (gtest, MSTest, etc.  whatever they have)
+Add the other test frameworks (MSTest, etc.  whatever they have)
     MSTest will need to have some major changes (where to do namespaces and end up the 
         classes)

@@ -75,7 +75,6 @@ namespace gherkinexecutor {
     void StepConstruct::tableToListOfListOfObject(const std::vector<std::string>& table,
         const std::string& fullName,
         const std::string& className) {
-        std::cout << "table to list of list of object " << fullName << " " << className <<std::endl;
     
         std::string s = std::to_string(getStepNumberInScenario());
         std::string dataType = "std::vector<std::vector<std::string>>";
@@ -162,10 +161,10 @@ namespace gherkinexecutor {
 
     void StepConstruct::createConvertTableToListOfListOfObjectMethod(const std::string& toClassOriginal) {
         // Note: This would need DataConstruct::DataValues equivalent in C++
-        std::cout << "Creating convertTableToListOfListOfObjectMethod for " << toClassOriginal << std::endl;       
+        outer->trace("Creating convertTableToListOfListOfObjectMethod for " + toClassOriginal);
         std::string toClass = this->outer->dataConstruct->alterDataType(toClassOriginal); 
-        std::cout << "Altered to class " << toClass << std::endl;
-        std::string convert = "std::string(s)";
+        DataConstruct::DataValues variable("s", "default", toClass, "notes");   
+        std::string convert = this->outer->makeValueFromString(variable, true);
         std::string template_str = R"(
                 static std::vector<std::vector<)" + toClass + R"(>> convertListTo)" + toClass + R"((const std::vector<std::vector<std::string>>& stringList) {
                     std::vector<std::vector<)" + toClass + R"(>> classList;

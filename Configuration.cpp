@@ -372,8 +372,6 @@ namespace gherkinexecutor {
                 }
                 else if (key == "spaceCharacters") {
                     spaceCharacters = parseChar(value);
-                    std::cout << "value is '" << value << "'" << std::endl;
-                    std::cout << "***** Space character set to '" << spaceCharacters << "'" << std::endl;
                 }
                 else if (key == "addLineToString") {
                     addLineToString = parseBool(value);

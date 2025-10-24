@@ -297,6 +297,7 @@ namespace gherkinexecutor {
             modifiedKeyword == "Verify" || modifiedKeyword == "Assemble" || modifiedKeyword == "Activate" ||
             modifiedKeyword == "Preconditions" || modifiedKeyword == "MainCourse" ||
             modifiedKeyword == "Exception" || modifiedKeyword == "Postconditions") {
+            stepCount++;
             if (pass != 3) return;
             if (skipSteps) return;
             stepConstruct->actOnStep(fullName, comment);
@@ -939,6 +940,9 @@ namespace gherkinexecutor {
                 error("Error in closing ");
             }
         }
+        else 
+            dataConstruct->endOneDataFile();
+
         templateConstruct->endTemplate();
 
         if (errorOccurred) {
@@ -946,7 +950,6 @@ namespace gherkinexecutor {
             std::exit(-1);
         }
 
-        dataConstruct->endOneDataFile();
     }
 
     // Static methods

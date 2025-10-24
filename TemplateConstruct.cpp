@@ -46,7 +46,6 @@ namespace gherkinexecutor {
 
     void TemplateConstruct::makeFunctionTemplate(const std::string& dataType, const std::string& fullName) {
         if (checkForExistingTemplate(dataType, fullName)) return;
-        std::cout << "Creating function template for " << fullName << " with data type " << dataType << std::endl;   
         parent->glueFunctions[fullName] = dataType;
         templateHeaderPrint("   void " + fullName + "(" + dataType + " values); ");
 
@@ -71,13 +70,11 @@ namespace gherkinexecutor {
     void TemplateConstruct::makeFunctionTemplateIsList(const std::string& dataType, const std::string& fullName,
         const std::string& listElement) {
         if (checkForExistingTemplate(dataType, fullName)) return;
-        std::cout << "Creating function template is list for " << fullName << " with data type " << dataType << std::endl;
         parent->glueFunctions[fullName] = dataType;
         templateHeaderPrint("   void " + fullName + "(const " + dataType + "& values); ");
         templatePrint("    void " + parent->glueClass + "::" + fullName + "(const " + dataType + "& values ) {");
         templatePrint("        std::cout << \"---  \" << \"" + fullName + "\" << std::endl;");
         if (dataType == "const std::vector<std::string>" || dataType == "std::vector<std::string>")        {
-            std::cout << " Vector of string" << std::endl; 
             if (Configuration::logIt) {
                 templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
                 templatePrint("        for (const auto& v : values) { log(v); }");
@@ -89,7 +86,6 @@ namespace gherkinexecutor {
             templatePrint("              }");
         }
         else if (dataType == "std::vector<std::vector<std::string>>") {
-            std::cout << " Vector of vector of string" << std::endl;
             // Special handling for vector of vector of strings
             templatePrint("        for (const auto& row : values) {");
             templatePrint("            for (const auto& element : row) {");
@@ -105,7 +101,6 @@ namespace gherkinexecutor {
             }
         }
         else {
-            std::cout << " list of objects " << std::endl;
             // Original handling for other types
             if (Configuration::logIt) {
                 templatePrint("        log(\"---  \" + std::string(\"" + fullName + "\"));");
@@ -146,11 +141,6 @@ namespace gherkinexecutor {
     void TemplateConstruct::makeFunctionTemplateObject(const std::string& dataType, const std::string& fullName,
         const std::string& listElement) {
         if (checkForExistingTemplate(dataType, fullName)) return;
-        std::cout << "Creating function template object for " << fullName << " with data type " << dataType << std::endl;   
-        //if (dataType != "std::vector<std::vector<std::string>>") {
-        //    std::cerr << "Not creating function for " << fullName << " with data type " << dataType << std::endl;
-        //    return;
-        //}
         parent->glueFunctions[fullName] = dataType;
         templateHeaderPrint("   void " + fullName + "(const " + dataType + "& values); ");
         templatePrint("    void " + parent->glueClass + "::" + fullName + "(const " + dataType + "& values ) {");
