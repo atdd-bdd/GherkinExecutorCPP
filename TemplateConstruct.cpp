@@ -1,8 +1,8 @@
-#pragma once
 
 #include <string>
 #include <memory>
 #include <fstream>
+#include <algorithm>
 #include "TemplateConstruct.h"
 #include "Configuration.h"
 namespace gherkinexecutor {

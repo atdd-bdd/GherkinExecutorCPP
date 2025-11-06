@@ -1,6 +1,7 @@
 
 // Change if needed to match compiler version 
 #include <filesystem>
+#include <algorithm>
 namespace fs = std::filesystem;
 
 #include "Translate.h"

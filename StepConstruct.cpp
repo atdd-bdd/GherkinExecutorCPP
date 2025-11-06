@@ -1,6 +1,5 @@
-
-
-
+#include <string>
+#include <algorithm>
 
 #include "StepConstruct.h"
 #include "Translate.h"

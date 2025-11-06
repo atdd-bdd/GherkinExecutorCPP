@@ -1,9 +1,8 @@
-#pragma once
-
 #include <string>
 #include <vector>
 #include <fstream>
 #include <memory>
+#include <algorithm>
 #include "DataConstruct.h"
 #include "Configuration.h"
 #include "Translate.h"
