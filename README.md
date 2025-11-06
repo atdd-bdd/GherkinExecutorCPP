@@ -26,7 +26,7 @@ This documents the setup required for C++.    It assumes you have some experienc
 
 ### Setup
 
-- Clone https://github.com/atdd-bdd/GherkinExecutorCPP and compile it.    There will be a standalone .exe file.   There is an exe file for Windows X64 provide.    
+- Clone https://github.com/atdd-bdd/GherkinExecutorCPP and compile it.    There will be a standalone .exe file.   There is an exe file for Windows X64 provided.   You can also compile and link using` g++ *.cpp -o GherkinExecutor`     
 
 - Create a `gtest `test project.   Other unit test frameworks will be ready shortly.    
 
